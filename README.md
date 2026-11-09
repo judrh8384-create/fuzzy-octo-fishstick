@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выживание: Убежище №14</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #2a1b1b; /* Темный, тревожный фон */
+            background-image: linear-gradient(to bottom, #3a2020, #0f0f0f);
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        /* Контейнер для формата вертикального видео (9:16) */
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            max-height: 800px;
+            background-color: #1a1a1a;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Верхний таймер */
+        #timer-box {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 10px 20px;
+            text-align: center;
+            z-index: 10;
+            display: none;
+        }
+
+        #timer-title {
+            font-size: 10px;
+            color: #aaa;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        #timer-value {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ff3333;
+            text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        /* Фоновые здания */
+        .buildings {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .building {
+            width: 80px;
+            background: #000;
+            border-top: 4px solid #ff6600;
+            position: relative;
+        }
+
+        .building::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 15px;
+            height: 15px;
+            background: #ffcc00;
+            box-shadow: 0 30px 0 #ffcc00, 30px 0 0 #ffcc00, 30px 30px 0 #ffcc00;
+        }
+
+        .b1 { height: 200px; width: 90px; }
+        .b2 { height: 350px; width: 110px; margin-bottom: 50px; }
+        .b3 { height: 250px; width: 70px; }
+
+        /* Персонаж (Кирилл) */
+        #character-container {
+            position: absolute;
+            bottom: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .character-name {
+            background: #444;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #777;
+        }
+
+        .person {
+            width: 60px;
+            height: 140px;
+            position: relative;
+        }
+        
+        .head {
+            width: 40px;
+            height: 40px;
+            background: #f1c27d;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 10px;
+            z-index: 2;
+        }
+        
+        .hair {
+            width: 44px;
+            height: 20px;
+            background: #2b1b11;
+            border-radius: 20px 20px 0 0;
+            position: absolute;
+            top: -2px;
+            left: -2px;
+        }
+
+        .eyes {
+            position: absolute;
+            top: 15px;
+            left: 8px;
+            width: 5px;
+            height: 5px;
+            background: #000;
+            border-radius: 50%;
+            box-shadow: 15px 0 0 #000;
+        }
+
+        .body {
+            width: 50px;
+            height: 70px;
+            background: #2c4c73;
+            border-radius: 10px 10px 0 0;
+            position: absolute;
+            top: 40px;
+            left: 5px;
+        }
+
+        .arm {
+            width: 15px;
+            height: 60px;
+            background: #2c4c73;
+            position: absolute;
+            top: 45px;
+            border-radius: 10px;
+            transform-origin: top center;
+        }
+
+        .arm-left { left: -10px; transform: rotate(30deg); }
+        .arm-right { right: -10px; transform: rotate(-30deg); }
+        
+        .legs {
+            position: absolute;
+            top: 110px;
+            left: 15px;
+            width: 10px;
+            height: 40px;
+            background: #1a1a1a;
+            box-shadow: 20px 0 0 #1a1a1a;
+        }
+
+        /* Голосовой текст */
+        #dialogue-box {
+            position: absolute;
+            bottom: 30px;
+            width: 90%;
+            left: 5%;
+            text-align: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        #speech-text {
+            font-size: 28px;
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 1.2;
+            color: white;
+            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 5px 15px rgba(0,0,0,0.8);
+            margin: 0;
+        }
+
+        .highlight { color: #ffcc00; }
+
+        /* Всплывающие окна (Правила, Дозиметр) */
+        .popup {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: rgba(20, 20, 20, 0.95);
+            border: 2px solid #ff3333;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 15;
+            width: 80%;
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .popup.active { transform: translateX(-50%) scale(1); }
+        
+        .popup-header {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .dosimeter-value {
+            font-size: 40px;
+            color: #ff3333;
+            text-align: center;
+            font-weight: 900;
+        }
+
+        .rule {
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .rule::before {
+            content: '■';
+            color: #ff3333;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+
+        /* Кнопка старта */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #start-btn {
+            background: #ff3333;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-family: inherit;
+            font-weight: 900;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Красная вспышка */
+        #flash {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: red;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+            transition: opacity 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- Таймер -->
+    <div id="timer-box">
+        <div id="timer-title">ГЕРМОДВЕРЬ ЗАКРОЕТСЯ ЧЕРЕЗ</div>
+        <div id="timer-value">00:10</div>
+    </div>
+
+    <!-- Фон -->
+    <div class="buildings">
+        <div class="building b1"></div>
+        <div class="building b2"></div>
+        <div class="building b3"></div>
+    </div>
+
+    <!-- Всплывающее окно дозиметра -->
+    <div class="popup" id="dosimeter-popup">
+        <div class="popup-header">ДОЗИМЕТР</div>
+        <div class="dosimeter-value">3.89 <span style="font-size: 14px; color:#aaa;">мкЗв/ч</span></div>
+    </div>
+
+    <!-- Всплывающее окно с правилами -->
+    <div class="popup" id="rules-popup">
+        <div class="popup-header">ПРАВИЛО 1</div>
+        <div class="rule">по таймеру, не по людям</div>
+        <div class="rule">открыто = воздух снаружи</div>
+    </div>
+
+    <!-- Персонаж -->
+    <div id="character-container">
+        <div class="character-name">КИРИЛЛ, 29</div>
+        <div class="person">
+            <div class="head"><div class="hair"></div><div class="eyes"></div></div>
+            <div class="body"></div>
+            <div class="arm arm-left"></div>
+            <div class="arm arm-right"></div>
+            <div class="legs"></div>
+        </div>
+    </div>
+
+    <!-- Текст на экране -->
+    <div id="dialogue-box">
+        <p id="speech-text"></p>
+    </div>
+
+    <!-- Вспышка -->
+    <div id="flash"></div>
+
+    <!-- Стартовый экран (нужен для активации звука в браузере) -->
+    <div id="start-screen">
+        <h1 style="color: #ff3333; font-size: 32px; text-shadow: 0 0 10px red;">ЗОМБИ АПОКАЛИПСИС</h1>
+        <p>Симулятор выживания</p>
+        <p style="font-size: 12px; color: #777;">(Включите звук!)</p>
+        <button id="start-btn">НАЧАТЬ ИСТОРИЮ</button>
+    </div>
+</div>
+
+<script>
+    // Элементы DOM
+    const startScreen = document.getElementById('start-screen');
+    const startBtn = document.getElementById('start-btn');
+    const speechText = document.getElementById('speech-text');
+    const timerBox = document.getElementById('timer-box');
+    const timerValue = document.getElementById('timer-value');
+    const characterContainer = document.getElementById('character-container');
+    const dosimeterPopup = document.getElementById('dosimeter-popup');
+    const rulesPopup = document.getElementById('rules-popup');
+    const flash = document.getElementById('flash');
+
+    // Настройки синтезатора речи
+    const synth = window.speechSynthesis;
+    let voices = [];
+    
+    // Загрузка голосов
+    function loadVoices() {
+        voices = synth.getVoices();
+    }
+    synth.onvoiceschanged = loadVoices;
+
+    function speak(text) {
+        if(synth.speaking) synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ru-RU';
+        utterance.rate = 1.1; // Чуть быстрее для драматизма
+        utterance.pitch = 0.8; // Пониже голос
+        // Ищем русский голос
+        const ruVoice = voices.find(v => v.lang === 'ru-RU');
+        if (ruVoice) utterance.voice = ruVoice;
+        synth.speak(utterance);
+    }
+
+    // Функция для эффекта печатной машинки
+    function typeWriter(text, element, speed = 50) {
+        return new Promise((resolve) => {
+            element.innerHTML = '';
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    // Поддержка HTML тегов (чтобы не сломать цвет)
+                    if (text.charAt(i) === '<') {
+                        const closingIndex = text.indexOf('>', i);
+                        element.innerHTML += text.substring(i, closingIndex + 1);
+                        i = closingIndex + 1;
+                    } else {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                    }
+                    setTimeout(type, speed);
+                } else {
+                    resolve();
+                }
+            }
+            type();
+        });
+    }
+
+    // Ожидание (пауза)
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Сценарий
+    async function playStory() {
+        startScreen.style.display = 'none';
+
+        // Сцена 1: Вступление
+        await typeWriter('ЗАКРОЙТЕ ДВЕРЬ', speechText, 80);
+        speak("Закройте дверь");
+        await wait(1000);
+        
+        await typeWriter('КИРИЛЛ, <span class="highlight">29 ЛЕТ</span>', speechText, 80);
+        speak("Кирилл, 29 лет");
+        characterContainer.style.display = 'flex';
+        await wait(1500);
+        
+        // Показываем таймер
+        timerBox.style.display = 'block';
+        let timeLeft = 10;
+        
+        // Сцена 2: Бег
+        await typeWriter('<span class="highlight">400 МЕТРОВ</span> ДО УБЕЖИЩА', speechText, 60);
+        speak("400 метров до убежища");
+        
+        // Анимация уменьшения таймера
+        const timerInterval = setInterval(() => {
+            timeLeft--;
+            timerValue.innerText = `00:${timeLeft.toString().padStart(2, '0')}`;
+            if (timeLeft <= 5) timerValue.style.color = '#ff0000';
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerValue.innerText = `00:00`;
+            }
+        }, 1000);
+
+        await wait(2500);
+
+        // Сцена 3: У двери
+        await typeWriter('Я УСПЕЛ... <span class="highlight">ОТКРОЙТЕ!</span>', speechText, 60);
+        speak("Я успел... Откройте!");
+        await wait(2000);
+
+        // Сцена 4: Палыч и правила
+        await typeWriter('ПАЛЫЧ, 63. <span class="highlight">БЫВШИЙ НАЧАЛЬНИК ГО</span>', speechText, 50);
+        speak("Палыч, 63. Бывший начальник гражданской обороны.");
+        rulesPopup.classList.add('active'); // Показываем правила
+        await wait(3000);
+        
+        // Сцена 5: Дозиметр
+        await typeWriter('ДОЗИМЕТР ПОКАЗЫВАЕТ <span class="highlight">3.89</span>', speechText, 50);
+        speak("Дозиметр показывает 3.89");
+        rulesPopup.classList.remove('active');
+        dosimeterPopup.classList.add('active'); // Показываем дозиметр
+        await wait(3000);
+        dosimeterPopup.classList.remove('active');
+
+        // Сцена 6: Диалог
+        await typeWriter('«ПО ПРАВИЛАМ Я НЕ МОГУ ОТКРЫТЬ»', speechText, 50);
+        speak("По правилам я не могу открыть");
+        await wait(2000);
+
+        await typeWriter('ЗА ДВЕРЬЮ <span class="highlight">11 ЧЕЛОВЕК</span>', speechText, 50);
+        speak("За дверью 11 человек");
+        await wait(2000);
+
+        // Сцена 7: Трагедия (Красная вспышка)
+        clearInterval(timerInterval);
+        timerValue.innerText = `00:00`;
+        flash.style.opacity = '0.6';
+        setTimeout(() => flash.style.opacity = '0', 300);
+
+        await typeWriter('<span class="highlight">ВОЗДУХ СНАРУЖИ.</span>', speechText, 80);
+        speak("Воздух снаружи. Правило 1. Открыто — значит заражено.");
+        
+        // Меняем цвет текста
+        speechText.style.color = '#ff3333';
+        
+        await wait(3000);
+
+        await typeWriter('СВЯЗЬ ПРЕРВАНА...', speechText, 100);
+        speak("Связь прервана.");
+        
+        // Конец
+        characterContainer.style.opacity = '0.3';
+        timerBox.style.display = 'none';
+    }
+
+    // Запуск по кнопке (чтобы браузер разрешил звук)
+    startBtn.addEventListener('click', () => {
+        // Инициализация голосов при первом клике (требование браузеров)
+        if (voices.length === 0) loadVoices();
+        playStory();
+    });
+
+</script>
+</body>
+</html>
